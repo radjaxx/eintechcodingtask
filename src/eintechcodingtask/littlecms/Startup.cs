@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using core.Common;
+using core.Interfaces;
+using littlecms.Repositories;
+using littlecms.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -13,17 +17,25 @@ namespace littlecms
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+        public IApplicationConfiguration AppConfig { get; }
+
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-        }
 
-        public IConfiguration Configuration { get; }
+            AppConfig = CreateAppConfiguration();
+        } 
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+
+            services.AddSingleton<IUnitOfWorkManager, UnitOfWorkManager>();
+            services.AddSingleton<ICmsService, CmsService>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -52,6 +64,14 @@ namespace littlecms
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
+        }
+
+        private IApplicationConfiguration CreateAppConfiguration()
+        {
+            return new ApplicationConfiguration
+            {
+                DbConnectionString = Configuration.GetValue<string>("ConnectionStrings:littlecms")
+            };
         }
     }
 }
